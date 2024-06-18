@@ -28,6 +28,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	compileOnly group: 'org.mariadb.jdbc', name: 'mariadb-java-client', version: '3.4.0'
 
+	implementation 'com.amazonaws:aws-java-sdk-sns:1.12.744'
+
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
