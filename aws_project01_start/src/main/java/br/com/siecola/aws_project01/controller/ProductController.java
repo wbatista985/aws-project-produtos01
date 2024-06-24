@@ -1,7 +1,9 @@
 package br.com.siecola.aws_project01.controller;
 
+import br.com.siecola.aws_project01.enums.EventType;
 import br.com.siecola.aws_project01.model.Product;
 import br.com.siecola.aws_project01.repository.ProductRepository;
+import br.com.siecola.aws_project01.services.ProductPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -16,9 +18,12 @@ import java.util.Optional;
 public class ProductController {
 
     private final ProductRepository productRepository;
+    private final ProductPublisher productPublisher;
 
-    public ProductController(ProductRepository productRepository) {
+    public ProductController(ProductRepository productRepository,
+                             ProductPublisher productPublisher) {
         this.productRepository = productRepository;
+        this.productPublisher = productPublisher;
     }
 
     @GetMapping
@@ -40,6 +45,8 @@ public class ProductController {
     public ResponseEntity<Product> saveProduct(@RequestBody Product product) {
         Product productCreated = productRepository.save(product);
 
+        productPublisher.publishProductEvent(productCreated, EventType.PRODUCT_CREATED, "wagner");
+
         return new ResponseEntity<Product>(productCreated, HttpStatus.CREATED);
     }
 
@@ -50,6 +57,9 @@ public class ProductController {
             product.setId(id);
 
             Product productUpdate = productRepository.save(product);
+
+            productPublisher.publishProductEvent(productUpdate, EventType.PRODUCT_UPDATE, "wagr");
+
             return new ResponseEntity<Product>(productUpdate, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -63,6 +73,8 @@ public class ProductController {
         if (optProduct.isPresent()) {
             Product product = optProduct.get();
             productRepository.delete(product);
+
+            productPublisher.publishProductEvent(product, EventType.PRODUCT_DELETED, "wagner");
 
             return new ResponseEntity<Product>(product, HttpStatus.OK);
         } else {
