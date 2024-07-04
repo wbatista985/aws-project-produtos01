@@ -29,6 +29,11 @@ dependencies {
 	compileOnly group: 'org.mariadb.jdbc', name: 'mariadb-java-client', version: '3.4.0'
 
 	implementation 'com.amazonaws:aws-java-sdk-sns:1.12.744'
+	implementation 'com.amazonaws:aws-java-sdk-s3:1.12.744'
+
+	implementation 'org.springframework:spring-jms:5.3.26'
+	implementation 'com.amazonaws:aws-java-sdk-sqs:1.12.744'
+	implementation 'com.amazonaws:amazon-sqs-java-messaging-lib:1.0.8'
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
