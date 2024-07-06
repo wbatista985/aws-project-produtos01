@@ -20,7 +20,7 @@ import java.util.UUID;
 @RequestMapping("/api/invoices")
 public class InvoiceController {
 
-    @Value("aws.s3.bucket.invoice.name")
+    @Value("${aws.s3.bucket.invoice.name}")
     private String bucketName;
 
     private final AmazonS3 amazonS3;
