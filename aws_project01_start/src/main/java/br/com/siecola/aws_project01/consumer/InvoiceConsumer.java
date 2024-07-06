@@ -9,6 +9,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Service;
 
@@ -66,14 +67,14 @@ public class InvoiceConsumer {
         }
     }
 
-    private String downloadObject(String bucketName, String objectKey) throws IOException {
+    private String downloadObject(String bucketName, String objectKey)
+            throws IOException {
         S3Object s3Object = amazonS3.getObject(bucketName, objectKey);
 
         StringBuilder stringBuilder = new StringBuilder();
         BufferedReader bufferedReader = new BufferedReader(
                 new InputStreamReader(s3Object.getObjectContent()));
-
-        String content;
+        String content = null;
         while ((content = bufferedReader.readLine()) != null) {
             stringBuilder.append(content);
         }
