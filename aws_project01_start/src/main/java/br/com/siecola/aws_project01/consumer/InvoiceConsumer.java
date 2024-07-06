@@ -6,8 +6,6 @@ import br.com.siecola.aws_project01.repository.InvoiceRepository;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.event.S3EventNotification;
 import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,15 +36,15 @@ public class InvoiceConsumer {
     }
 
     @JmsListener(destination = "${aws.sqs.queue.invoice.events.name}")
-    public void receiveEvent(TextMessage  textMessage) throws JMSException, IOException {
-
-        SnsMessage snsMessage = objectMapper.readValue(textMessage.getText(), SnsMessage.class);
+    public void receiveS3Event(TextMessage textMessage)
+            throws JMSException, IOException {
+        SnsMessage snsMessage = objectMapper.readValue(textMessage.getText(),
+                SnsMessage.class);
 
         S3EventNotification s3EventNotification = objectMapper
-                .readValue(textMessage.getText(), S3EventNotification.class);
+                .readValue(snsMessage.getMessage(), S3EventNotification.class);
 
         processInvoiceNotification(s3EventNotification);
-
     }
 
     private void processInvoiceNotification(S3EventNotification s3EventNotification)
@@ -61,12 +59,11 @@ public class InvoiceConsumer {
             String invoiceFile = downloadObject(bucketName, objectKey);
 
             Invoice invoice = objectMapper.readValue(invoiceFile, Invoice.class);
-            log.info("Processing Invoice: {}", invoice);
+            log.info("Invoice received: {}", invoice.getInvoiceNumber());
 
             invoiceRepository.save(invoice);
             amazonS3.deleteObject(bucketName, objectKey);
         }
-
     }
 
     private String downloadObject(String bucketName, String objectKey) throws IOException {
@@ -76,13 +73,11 @@ public class InvoiceConsumer {
         BufferedReader bufferedReader = new BufferedReader(
                 new InputStreamReader(s3Object.getObjectContent()));
 
-        String content = null;
+        String content;
         while ((content = bufferedReader.readLine()) != null) {
             stringBuilder.append(content);
         }
-
         return stringBuilder.toString();
     }
-
 
 }
