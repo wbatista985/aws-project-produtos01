@@ -5,6 +5,7 @@ import br.com.siecola.aws_project01.model.Envelope;
 import br.com.siecola.aws_project01.model.Product;
 import br.com.siecola.aws_project01.model.ProductEvent;
 import com.amazonaws.services.sns.AmazonSNS;
+import com.amazonaws.services.sns.model.PublishResult;
 import com.amazonaws.services.sns.model.Topic;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class ProductPublisher {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProductPublisher.class);
+    private static final Logger log = LoggerFactory.getLogger(ProductPublisher.class);
 
     private final AmazonSNS snsClient;
     private final Topic productEventsTopic;
@@ -45,12 +46,17 @@ public class ProductPublisher {
         try {
             envelope.setData(objectMapper.writeValueAsString(productEvent));
 
-            snsClient.publish(
+            PublishResult publishResult = snsClient.publish(
                     productEventsTopic.getTopicArn(),
                     objectMapper.writeValueAsString(envelope));
 
+            log.info("Product event sent - Event: {} - ProductId: {} - MessageId: {}",
+                    envelope.getEventType(),
+                    productEvent.getProductId(),
+                    publishResult.getMessageId());
+
         } catch (JsonProcessingException e) {
-            LOG.error("Error serializing product event");
+            log.error("Error serializing product event");
         }
     }
 }
