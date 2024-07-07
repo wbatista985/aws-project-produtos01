@@ -85,11 +85,9 @@ public class ProductController {
     @GetMapping("/bycode")
     public ResponseEntity<Product> findByCode(@RequestParam String code) {
         Optional<Product> optProduct = productRepository.findByCode(code);
-        if (optProduct.isPresent()) {
-            return new ResponseEntity<Product>(optProduct.get(), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        return optProduct.map(product ->
+                new ResponseEntity<>(product, HttpStatus.OK)).orElseGet(() ->
+                new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
 }
