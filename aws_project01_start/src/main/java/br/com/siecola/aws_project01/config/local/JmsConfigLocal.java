@@ -24,11 +24,9 @@ public class JmsConfigLocal {
     @Value("${aws.region}")
     private String awsRegion;
 
-    private SQSConnectionFactory sqsConnectionFactory;
-
     @Bean
     public DefaultJmsListenerContainerFactory jmsListenerContainerFactory() {
-        sqsConnectionFactory = new SQSConnectionFactory(
+        SQSConnectionFactory sqsConnectionFactory = new SQSConnectionFactory(
                 new ProviderConfiguration(),
                 AmazonSQSClient.builder()
                         .withEndpointConfiguration(
