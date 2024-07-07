@@ -22,6 +22,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+
 @Configuration
 @Profile("local")
 public class S3ConfigLocal {
@@ -31,7 +34,7 @@ public class S3ConfigLocal {
     private AmazonS3 amazonS3;
 
     public S3ConfigLocal() {
-        AmazonS3 amazonS3 = getAmazonS3();
+        amazonS3 = getAmazonS3();
 
         createBucket();
 
@@ -43,33 +46,49 @@ public class S3ConfigLocal {
 
         createQueue(snsClient, s3InvoiceEventsTopicArn, sqsClient);
 
-        configueBucket(s3InvoiceEventsTopicArn);
-
+        configureBucket(s3InvoiceEventsTopicArn);
     }
 
-    private void configueBucket(String s3InvoiceEventsTopicArn) {
+    private void configureBucket(String s3InvoiceEventsTopicArn) {
         TopicConfiguration topicConfiguration = new TopicConfiguration();
         topicConfiguration.setTopicARN(s3InvoiceEventsTopicArn);
         topicConfiguration.addEvent(S3Event.ObjectCreatedByPut);
 
         amazonS3.setBucketNotificationConfiguration(BUCKET_NAME,
-                new BucketNotificationConfiguration().addConfiguration("putObject",topicConfiguration));
+                new BucketNotificationConfiguration().addConfiguration("putObject", topicConfiguration));
     }
 
     private void createQueue(AmazonSNS snsClient, String s3InvoiceEventsTopicArn, AmazonSQS sqsClient) {
-        String productEventsQueueUrl = sqsClient.createQueue(
+        String s3InvoiceQueueUrl = sqsClient.createQueue(
                 new CreateQueueRequest("s3-invoice-events")).getQueueUrl();
 
-        Topics.subscribeQueue(snsClient, sqsClient, s3InvoiceEventsTopicArn, productEventsQueueUrl);
+        Topics.subscribeQueue(snsClient, sqsClient, s3InvoiceEventsTopicArn, s3InvoiceQueueUrl);
     }
 
     private String createTopic(AmazonSNS snsClient) {
         CreateTopicRequest createTopicRequest = new CreateTopicRequest("s3-invoice-events");
         return snsClient.createTopic(createTopicRequest).getTopicArn();
-
     }
 
-    public AmazonS3 getAmazonS3() {
+    private AmazonSQS getAmazonSQS() {
+        return AmazonSQSClient.builder()
+                .withEndpointConfiguration(
+                        new AwsClientBuilder.EndpointConfiguration("http://localhost:4566",
+                                Regions.US_EAST_1.getName()))
+                .withCredentials(new DefaultAWSCredentialsProviderChain())
+                .build();
+    }
+
+    private AmazonSNS getAmazonSNS() {
+        return AmazonSNSClient.builder()
+                .withEndpointConfiguration(
+                        new AwsClientBuilder.EndpointConfiguration("http://localhost:4566",
+                                Regions.US_EAST_1.getName()))
+                .withCredentials(new DefaultAWSCredentialsProviderChain())
+                .build();
+    }
+
+    private AmazonS3 getAmazonS3() {
         AWSCredentials credentials = new BasicAWSCredentials("test", "test");
 
         this.amazonS3 = AmazonS3Client.builder()
@@ -79,31 +98,15 @@ public class S3ConfigLocal {
                 .withCredentials(new AWSStaticCredentialsProvider(credentials))
                 .enablePathStyleAccess()
                 .build();
-
-        return this.amazonS3;
+        return amazonS3;
     }
 
     private void createBucket() {
-        this.amazonS3.createBucket(BUCKET_NAME);
-    }
-
-    private AmazonSNS getAmazonSNS() {
-        return AmazonSNSClient.builder()
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("http://localhost:4566", Regions.US_EAST_1.getName()))
-                .withCredentials(new DefaultAWSCredentialsProviderChain())
-                .build();
-    }
-
-    private AmazonSQS getAmazonSQS() {
-        return AmazonSQSClient.builder()
-                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration("http://localhost:4566", Regions.US_EAST_1.getName()))
-                .withCredentials(new DefaultAWSCredentialsProviderChain())
-                .build();
+        amazonS3.createBucket(BUCKET_NAME);
     }
 
     @Bean
-    public AmazonS3 amazonS3Client(){
+    public AmazonS3 amazonS3Client() {
         return this.amazonS3;
     }
-
 }
