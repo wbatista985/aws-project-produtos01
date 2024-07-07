@@ -13,8 +13,8 @@ import lombok.Setter;
 public class Invoice {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    private long id;
 
     @Column(length = 32, nullable = false)
     private String invoiceNumber;
