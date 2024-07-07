@@ -28,7 +28,8 @@ public class InvoiceController {
     private InvoiceRepository invoiceRepository;
 
     @Autowired
-    public InvoiceController(AmazonS3 amazonS3, InvoiceRepository invoiceRepository) {
+    public InvoiceController(AmazonS3 amazonS3,
+                             InvoiceRepository invoiceRepository) {
         this.amazonS3 = amazonS3;
         this.invoiceRepository = invoiceRepository;
     }
